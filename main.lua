@@ -35,6 +35,8 @@ local spawnTimer = 0
 
 local lastY = -PIPE_HEIGHT + math.random(80) + 20
 
+local scrolling = true
+
 --setting the required parameters for game
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
@@ -76,38 +78,45 @@ end
 
 --Updating background and ground to generate scroll effect
 function love.update(dt)
-    backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
-        % BACKGROUND_LOOPING_POINT
+    if scrolling then
+        backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
+            % BACKGROUND_LOOPING_POINT
 
-    groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
-        % VIRTUAL_WIDTH
+        groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
+            % VIRTUAL_WIDTH
 
-    --Spawning pipes after every 2 sec
-    spawnTimer = spawnTimer + dt
+        --Spawning pipes after every 2 sec
+        spawnTimer = spawnTimer + dt
 
-    if spawnTimer > 2 then
-        local y = math.max(-PIPE_HEIGHT + 10, math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
-        lastY = y
+        if spawnTimer > 2 then
+            local y = math.max(-PIPE_HEIGHT + 10, math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
+            lastY = y
 
-        table.insert(pipePairs, PipePair(y))
-        spawnTimer = 0 
-    end
-
-    bird:update(dt)
-
-    --removing pipes from the screen once they have passed 
-    for k, pair in pairs(pipePairs) do
-        pair:update(dt)
-    end
-    
-    for k, pair in pairs(pipePairs) do
-        if pair.remove then
-            table.remove(pipePairs, k)
+            table.insert(pipePairs, PipePair(y))
+            spawnTimer = 0 
         end
-    end
 
-    --Flushing the key pressed value to track it again
-    love.keyboard.keysPressed = {}
+        bird:update(dt)
+
+        --removing pipes from the screen once they have passed 
+        for k, pair in pairs(pipePairs) do
+            pair:update(dt)
+        end
+
+        for l, pipe in pairs(pipePairs) do
+            if bird:collides(pipe) then
+                scrolling = false
+            end
+        end
+        
+        for k, pair in pairs(pipePairs) do
+            if pair.remove then
+                table.remove(pipePairs, k)
+            end
+        end
+
+        --Flushing the key pressed value to track it again
+    end        love.keyboard.keysPressed = {}
 end
 
 --Function for rendering things on screen
