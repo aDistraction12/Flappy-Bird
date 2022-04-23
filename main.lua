@@ -8,6 +8,11 @@ require 'Classes/Pipe'
 
 require 'Classes/PipePair'
 
+require 'StateMachine'
+require 'states/BaseState'
+require 'states/PlayState'
+require 'states/TitleScreenState'
+
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 
@@ -43,11 +48,26 @@ function love.load()
 
     love.window.setTitle('Flappy Bird')
 
+    --Settings up new fonts for Title screens
+    smallFont = love.graphics.newFont('fonts/font.ttf', 8)
+    mediumFont = love.graphics.newFont('fonts/flappy.ttf', 14)
+    flappyFont = love.graphics.newFont('fonts/flappy.ttf', 28)
+    hugeFont = love.graphics.newFont('fonts/flappy.ttf', 56)
+    love.graphics.setFont(flappyFont)
+
+
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT , {
         vsync = true,
         fullscreen = false,
         resizable = true
     })
+
+    --initialize state machine with all state-returning functions
+    gStateMachine = StateMachine {
+        ['title'] = function() return TitleScreenState() end,
+        ['play'] = function() return PlayState() end,
+    }
+    gStateMachine:change('title')
 
     love.keyboard.keysPressed = {}
 end
@@ -85,50 +105,51 @@ function love.update(dt)
         groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
             % VIRTUAL_WIDTH
 
+        gStateMachine:update(dt)
+
         --Spawning pipes after every 2 sec
-        spawnTimer = spawnTimer + dt
+        -- spawnTimer = spawnTimer + dt
 
-        if spawnTimer > 2 then
-            local y = math.max(-PIPE_HEIGHT + 10, math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
-            lastY = y
+        -- if spawnTimer > 2 then
+        --     local y = math.max(-PIPE_HEIGHT + 10, math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
+        --     lastY = y
 
-            table.insert(pipePairs, PipePair(y))
-            spawnTimer = 0 
-        end
+        --     table.insert(pipePairs, PipePair(y))
+        --     spawnTimer = 0 
+        -- end
 
-        bird:update(dt)
+        -- bird:update(dt)
 
-        --removing pipes from the screen once they have passed 
-        for k, pair in pairs(pipePairs) do
-            pair:update(dt)
-        end
+        -- --removing pipes from the screen once they have passed 
+        -- for k, pair in pairs(pipePairs) do
+        --     pair:update(dt)
+        -- end
 
-        for l, pipe in pairs(pipePairs) do
-            if bird:collides(pipe) then
-                scrolling = false
-            end
-        end
+        -- for l, pipe in pairs(pipePairs) do
+        --     if bird:collides(pipe) then
+        --         scrolling = false
+        --     end
+        -- end
         
-        for k, pair in pairs(pipePairs) do
-            if pair.remove then
-                table.remove(pipePairs, k)
-            end
-        end
+        -- for k, pair in pairs(pipePairs) do
+        --     if pair.remove then
+        --         table.remove(pipePairs, k)
+        --     end
+        -- end
 
         --Flushing the key pressed value to track it again
-    end        love.keyboard.keysPressed = {}
+        love.keyboard.keysPressed = {}
+    end       
 end
 
 --Function for rendering things on screen
 function love.draw()
     push:start()
     love.graphics.draw(background, -backgroundScroll, 0)
-
-    for k, pair in pairs(pipePairs) do 
-        pair:render()
-    end
+    
+    gStateMachine:render()
 
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
-    bird:render()
+   --bird:render()
     push:finish()
 end
