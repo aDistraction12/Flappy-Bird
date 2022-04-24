@@ -11,6 +11,7 @@ require 'Classes/PipePair'
 require 'StateMachine'
 require 'states/BaseState'
 require 'states/PlayState'
+require 'states/ScoreState'
 require 'states/TitleScreenState'
 
 WINDOW_WIDTH = 1280
@@ -66,6 +67,7 @@ function love.load()
     gStateMachine = StateMachine {
         ['title'] = function() return TitleScreenState() end,
         ['play'] = function() return PlayState() end,
+        ['score'] = function() return ScoreState() end
     }
     gStateMachine:change('title')
 
@@ -106,37 +108,6 @@ function love.update(dt)
             % VIRTUAL_WIDTH
 
         gStateMachine:update(dt)
-
-        --Spawning pipes after every 2 sec
-        -- spawnTimer = spawnTimer + dt
-
-        -- if spawnTimer > 2 then
-        --     local y = math.max(-PIPE_HEIGHT + 10, math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
-        --     lastY = y
-
-        --     table.insert(pipePairs, PipePair(y))
-        --     spawnTimer = 0 
-        -- end
-
-        -- bird:update(dt)
-
-        -- --removing pipes from the screen once they have passed 
-        -- for k, pair in pairs(pipePairs) do
-        --     pair:update(dt)
-        -- end
-
-        -- for l, pipe in pairs(pipePairs) do
-        --     if bird:collides(pipe) then
-        --         scrolling = false
-        --     end
-        -- end
-        
-        -- for k, pair in pairs(pipePairs) do
-        --     if pair.remove then
-        --         table.remove(pipePairs, k)
-        --     end
-        -- end
-
         --Flushing the key pressed value to track it again
         love.keyboard.keysPressed = {}
     end       
@@ -150,6 +121,5 @@ function love.draw()
     gStateMachine:render()
 
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
-   --bird:render()
     push:finish()
 end

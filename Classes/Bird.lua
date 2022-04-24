@@ -23,7 +23,7 @@ function Bird:update(dt)
         self.dy = -5
     end
 
-    self.y = self.y + self.dy
+    self.y = math.max(0,self.y + self.dy)
 end
 
 function Bird:collides(pipe)
