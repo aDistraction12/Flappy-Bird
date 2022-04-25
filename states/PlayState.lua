@@ -19,7 +19,7 @@ function PlayState:init()
 end
 
 function PlayState:update(dt)
-    -- update timer for pipe spawning
+-- update timer for pipe spawning
     self.timer = self.timer + dt
 
     -- spawn a new pipe pair every second and a half
@@ -41,6 +41,7 @@ function PlayState:update(dt)
             if pair.x + PIPE_WIDTH < self.bird.x then
                 self.score = self.score + 1
                 pair.scored = true
+                sounds['score']:play()
             end
         end
         
@@ -60,6 +61,8 @@ function PlayState:update(dt)
     for k, pair in pairs(self.pipePairs) do
         for l, pipe in pairs(pair.pipes) do
             if self.bird:collides(pipe) then
+                sounds['explosion']:play()
+                sounds['hurt']:play()
                 gStateMachine:change('score', {
                     score = self.score
                 })
@@ -73,6 +76,7 @@ function PlayState:update(dt)
             score = self.score
         })
     end
+
 end
 
 function PlayState:render()
@@ -84,4 +88,17 @@ function PlayState:render()
     love.graphics.print('Score: ' .. tostring(self.score), 8, 8)
 
     self.bird:render()
+end
+
+function PlayState:enter()
+    -- if we're coming from death, restart scrolling
+    scrolling = true
+end
+
+--[[
+    Called when this state changes to another state.
+]]
+function PlayState:exit()
+    -- stop scrolling for the death/score screen
+    scrolling = false
 end

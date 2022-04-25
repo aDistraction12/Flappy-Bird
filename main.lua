@@ -8,7 +8,7 @@ require 'Classes/Pipe'
 
 require 'Classes/PipePair'
 
-require 'StateMachine'
+require 'states/StateMachine'
 require 'states/BaseState'
 require 'states/CountdownState'
 require 'states/PlayState'
@@ -42,7 +42,7 @@ local spawnTimer = 0
 
 local lastY = -PIPE_HEIGHT + math.random(80) + 20
 
-local scrolling = true
+scrolling = true
 
 --setting the required parameters for game
 function love.load()
@@ -56,6 +56,18 @@ function love.load()
     flappyFont = love.graphics.newFont('fonts/flappy.ttf', 28)
     hugeFont = love.graphics.newFont('fonts/flappy.ttf', 56)
     love.graphics.setFont(flappyFont)
+
+    sounds = {
+        ['jump'] = love.audio.newSource('audio/jump.wav', 'static'),
+        ['explosion'] = love.audio.newSource('audio/explosion.wav', 'static'),
+        ['hurt'] = love.audio.newSource('audio/hurt.wav', 'static'),
+        ['score'] = love.audio.newSource('audio/score.wav', 'static'),
+        ['pause'] = love.audio.newSource('audio/pause.wav', 'static'),
+        ['music'] = love.audio.newSource('audio/marios_way.mp3', 'static')
+    }
+
+    sounds['music']:setLooping(true)
+    sounds['music']:play()
 
 
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT , {
@@ -82,13 +94,33 @@ function love.resize(w, h)
     push:resize(w, h)
 end
 
+function love.mousepressed(x, y, button)
+    love.mouse.buttonsPressed[button] = true
+end
+
 --Function for quitting the game
 function love.keypressed(key)
     love.keyboard.keysPressed[key] = true
-    
+
     if key == 'escape' then
         love.event.quit()
     end
+
+    if  key == 'p' then
+        sounds['pause']:play()
+
+        if paused then
+        sounds['music']:play()
+        paused = false
+        else 
+            sounds['music']:pause()
+            x=1
+        end
+    end
+end
+
+function love.mouse.wasPressed(button)
+    return love.mouse.buttonsPressed[button]
 end
 
 --Function for checking the key pressed on each frame
@@ -103,7 +135,12 @@ end
 
 --Updating background and ground to generate scroll effect
 function love.update(dt)
-    if scrolling then
+     if x == 1 then
+        paused = true
+        x = o 
+    end
+
+    if not paused then
         backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
             % BACKGROUND_LOOPING_POINT
 
@@ -113,6 +150,7 @@ function love.update(dt)
         gStateMachine:update(dt)
         --Flushing the key pressed value to track it again
         love.keyboard.keysPressed = {}
+        love.mouse.buttonsPressed = {}
     end       
 end
 
@@ -124,5 +162,15 @@ function love.draw()
     gStateMachine:render()
 
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
+
+    if paused then
+        love.graphics.setColor(0,0,0,90/255)
+        love.graphics.rectangle('fill', 0, 0,VIRTUAL_WIDTH,VIRTUAL_HEIGHT)
+        love.graphics.setFont(hugeFont)
+        love.graphics.printf('PAUSE',0,100,VIRTUAL_WIDTH,'center')
+        love.graphics.setFont(mediumFont)
+        love.graphics.printf('Press ESC to Exit',0,170,VIRTUAL_WIDTH,'center')
+
+    end
     push:finish()
 end
